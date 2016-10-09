@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardServer", "CardServer\CardServer.csproj", "{A345A61F-5D0C-4B84-ADC4-B1A8646631E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Comm", "Comm\Comm.csproj", "{D3C464AB-60BA-42AB-B032-F1986996B808}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoginServer", "LoginServer\LoginServer.csproj", "{68E0667E-5E01-4C49-A649-3A0EDC1D7BAF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A345A61F-5D0C-4B84-ADC4-B1A8646631E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A345A61F-5D0C-4B84-ADC4-B1A8646631E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A345A61F-5D0C-4B84-ADC4-B1A8646631E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A345A61F-5D0C-4B84-ADC4-B1A8646631E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3C464AB-60BA-42AB-B032-F1986996B808}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3C464AB-60BA-42AB-B032-F1986996B808}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3C464AB-60BA-42AB-B032-F1986996B808}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3C464AB-60BA-42AB-B032-F1986996B808}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68E0667E-5E01-4C49-A649-3A0EDC1D7BAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68E0667E-5E01-4C49-A649-3A0EDC1D7BAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68E0667E-5E01-4C49-A649-3A0EDC1D7BAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68E0667E-5E01-4C49-A649-3A0EDC1D7BAF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
