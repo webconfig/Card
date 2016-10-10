@@ -10,7 +10,7 @@ namespace Comm.Network
     /// 服务器基类
     /// </summary>
     /// <typeparam name="TClient"></typeparam>
-	public abstract class BaseServer<TClient> where TClient : BaseClient, new()
+	public class BaseServer<TClient> where TClient : BaseClient, new()
 	{
 		private Socket _socket;
 		public List<TClient> Clients { get; set; }
@@ -25,7 +25,7 @@ namespace Comm.Network
         /// </summary>
 		public event ClientConnectionEventHandler ClientDisconnected;
 
-		protected BaseServer()
+        public BaseServer()
 		{
 			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			_socket.NoDelay = true;
@@ -218,13 +218,6 @@ namespace Comm.Network
 			}
 		}
 
-		/// <summary>
-        /// 获取包长度
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="ptr"></param>
-        /// <returns></returns>
-		protected abstract int GetPacketLength(byte[] buffer, int ptr);
 
         /// <summary>
         /// 处理包数据

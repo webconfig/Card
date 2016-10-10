@@ -1,19 +1,16 @@
-﻿// Copyright (c) Aura development team - Licensed under GNU GPL
-// For more information, see license file in the main folder
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Comm.Util;
 
 namespace Comm.Network
 {
     /// <summary>
-    /// Packet handler manager base class.
+    /// 处理数据
     /// </summary>
     /// <typeparam name="TClient"></typeparam>
     public abstract class PacketHandlerManager<TClient> where TClient : BaseClient
     {
-        public delegate void PacketHandlerFunc(TClient client, int command,byte[] datas);
+        public delegate void PacketHandlerFunc(TClient client, byte[] datas);
 
         private Dictionary<int, PacketHandlerFunc> _handlers;
 
@@ -23,7 +20,7 @@ namespace Comm.Network
         }
 
         /// <summary>
-        /// Adds and/or overwrites handler.
+        /// 添加一个处理数据的模块
         /// </summary>
         /// <param name="op"></param>
         /// <param name="handler"></param>
@@ -33,7 +30,7 @@ namespace Comm.Network
         }
 
         /// <summary>
-        /// Adds all methods with a Handler attribute.
+        /// 加载所有处理数据的模块
         /// </summary>
         public void AutoLoad()
         {
@@ -49,10 +46,11 @@ namespace Comm.Network
         }
 
         /// <summary>
-        /// Runs handler for packet's op, or logs it as unimplemented.
+        /// 处理数据
         /// </summary>
         /// <param name="client"></param>
-        /// <param name="packet"></param>
+        /// <param name="command"></param>
+        /// <param name="datas"></param>
         public virtual void Handle(TClient client, int command, byte[] datas)
         {
             PacketHandlerFunc handler;
@@ -64,7 +62,7 @@ namespace Comm.Network
 
             try
             {
-                handler(client, command, datas);
+                handler(client, datas);
             }
             catch (PacketElementTypeException ex)
             {
@@ -83,10 +81,6 @@ namespace Comm.Network
         }
     }
 
-    /// <summary>
-    /// Methods having this attribute are registered as packet handlers,
-    /// for the ops.
-    /// </summary>
     public class PacketHandlerAttribute : Attribute
     {
         public int[] Ops { get; protected set; }
@@ -109,9 +103,6 @@ namespace Comm.Network
         Bin = 7,
     }
 
-    /// <summary>
-    /// An exception for when a value of the wrong type is read from Packet.
-    /// </summary>
     public class PacketElementTypeException : Exception
     {
         public PacketElementTypeException(PacketElementType expected, PacketElementType actual)
