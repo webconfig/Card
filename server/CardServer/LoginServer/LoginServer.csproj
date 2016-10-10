@@ -43,11 +43,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfFile\LoginConf.cs" />
+    <Compile Include="ConfFile\LoginConsoleCommands.cs" />
+    <Compile Include="LoginServer.cs" />
+    <Compile Include="Network\Handlers\LoginServerHandlers.cs" />
+    <Compile Include="Network\LoginClient.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="login.conf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Comm\Comm.csproj">

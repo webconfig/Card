@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Comm.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,15 @@ namespace LoginServer
     {
         static void Main(string[] args)
         {
+            try
+            {
+                LoginServer.Instance.Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Exception(ex, "An exception occured while starting the server.");
+                CliUtil.Exit(1);
+            }
         }
     }
 }
