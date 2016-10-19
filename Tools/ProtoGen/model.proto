@@ -1,0 +1,18 @@
+package google.protobuf;
+option optimize_for = SPEED;
+
+message Register {
+  required string Password = 1;
+}
+message RegisterResult {
+  required bool Success = 1;
+}
+message ChannelData {
+  required string ChannelServer = 1;
+  required string ChannelName = 2;
+  required string ChannelHost = 3;
+  required int32 ChannelPort = 4;
+  required int32 cur = 5;
+  required int32 max = 6;
+  required int32 state = 7;
+}
