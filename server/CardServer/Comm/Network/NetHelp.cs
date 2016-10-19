@@ -7,7 +7,7 @@ using Comm.Util;
 
 public class NetHelp
 {
-    public static void Send<T>(int type, T t, NetworkStream _stream)
+    public static void Send<T>(int type, T t, Socket socket)
     {
         byte[] msg;
         using (MemoryStream ms = new MemoryStream())
@@ -27,15 +27,14 @@ public class NetHelp
 
         try
         {
-            _stream.Write(data, 0, data.Length);
-            _stream.Flush();
+            socket.Send(data);
         }
         catch (Exception ex)
         {
             Log.Error("发送数据错误:" + ex.ToString());
         }
     }
-    public static bool Send(int type, NetworkStream _stream)
+    public static bool Send(int type, Socket socket)
     {
         byte[] type_value = IntToBytes(type);
         byte[] Length_value = IntToBytes(type_value.Length);
@@ -44,9 +43,7 @@ public class NetHelp
         type_value.CopyTo(data, 4);
         try
         {
-            Log.Info("发送心跳包");
-            _stream.Write(data, 0, data.Length);
-            _stream.Flush();
+            socket.Send(data);
             return true;
         }
         catch (Exception ex)

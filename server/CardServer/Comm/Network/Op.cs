@@ -9,6 +9,14 @@ namespace Comm.Network
         // Login Server
         // ------------------------------------------------------------------
         public const int Login = 0x0001;
+
+        public static class Internal
+        {
+            public const int ChannelToLogin = 0x00000001;
+            public const int LoginResult = 0x00000002;
+        }
+
+
         /// <summary>
         /// Returns name of op code, if it's defined.
         /// </summary>
