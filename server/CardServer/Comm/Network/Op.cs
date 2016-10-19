@@ -14,6 +14,7 @@ namespace Comm.Network
         {
             public const int ChannelToLogin = 0x00000001;
             public const int LoginResult = 0x00000002;
+            public const int ChannelStatus= 0x00000003;
         }
 
 

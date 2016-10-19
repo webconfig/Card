@@ -56,9 +56,12 @@
     <Compile Include="ConsoleCommands\ConsoleCommands.cs" />
     <Compile Include="Network\BaseClient.cs" />
     <Compile Include="Network\BaseServer.cs" />
+    <Compile Include="Network\data\ChannelState.cs" />
+    <Compile Include="Network\data\ServerInfo.cs" />
     <Compile Include="Network\NetHelp.cs" />
     <Compile Include="Network\Op.cs" />
     <Compile Include="Network\PacketHandlerManager.cs" />
+    <Compile Include="Network\data\ServerInfoManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerMain.cs" />
     <Compile Include="Util\CliUtil.cs" />
