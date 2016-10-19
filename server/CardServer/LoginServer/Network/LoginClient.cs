@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using LoginServer.Database;
 
 namespace LoginServer
 {
     public class LoginClient :Comm.Network.BaseClient
     {
         public string Ident { get; set; }
-        //public Account Account { get; set; }
+        public Account Account { get; set; }
 
         public override void CleanUp()
         {

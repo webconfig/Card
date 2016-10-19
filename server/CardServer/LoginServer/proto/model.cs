@@ -44,4 +44,63 @@ namespace google.protobuf
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"ChannelData")]
+  public partial class ChannelData : global::ProtoBuf.IExtensible
+  {
+    public ChannelData() {}
+    
+    private string _ChannelServer;
+    [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"ChannelServer", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string ChannelServer
+    {
+      get { return _ChannelServer; }
+      set { _ChannelServer = value; }
+    }
+    private string _ChannelName;
+    [global::ProtoBuf.ProtoMember(2, IsRequired = true, Name=@"ChannelName", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string ChannelName
+    {
+      get { return _ChannelName; }
+      set { _ChannelName = value; }
+    }
+    private string _ChannelHost;
+    [global::ProtoBuf.ProtoMember(3, IsRequired = true, Name=@"ChannelHost", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string ChannelHost
+    {
+      get { return _ChannelHost; }
+      set { _ChannelHost = value; }
+    }
+    private int _ChannelPort;
+    [global::ProtoBuf.ProtoMember(4, IsRequired = true, Name=@"ChannelPort", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    public int ChannelPort
+    {
+      get { return _ChannelPort; }
+      set { _ChannelPort = value; }
+    }
+    private int _cur;
+    [global::ProtoBuf.ProtoMember(5, IsRequired = true, Name=@"cur", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    public int cur
+    {
+      get { return _cur; }
+      set { _cur = value; }
+    }
+    private int _max;
+    [global::ProtoBuf.ProtoMember(6, IsRequired = true, Name=@"max", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    public int max
+    {
+      get { return _max; }
+      set { _max = value; }
+    }
+    private int _state;
+    [global::ProtoBuf.ProtoMember(7, IsRequired = true, Name=@"state", DataFormat = global::ProtoBuf.DataFormat.TwosComplement)]
+    public int state
+    {
+      get { return _state; }
+      set { _state = value; }
+    }
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
 }

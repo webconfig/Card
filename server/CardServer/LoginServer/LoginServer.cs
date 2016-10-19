@@ -3,6 +3,7 @@ using Comm;
 using Comm.Network;
 using LoginServer.Network.Handlers;
 using Comm.Util;
+using System.Collections.Generic;
 
 namespace LoginServer
 {
@@ -13,13 +14,17 @@ namespace LoginServer
 
         public BaseServer<LoginClient> Server { get; set; }
         public LoginConf Conf { get; private set; }
-
+        public ServerInfoManager ServerList { get; private set; }
+        public List<LoginClient> ChannelClients { get; private set; }
         private LoginServer()
         {
             this.Server = new BaseServer<LoginClient>();
             this.Server.Handlers = new LoginServerHandlers();
             this.Server.Handlers.AutoLoad();
             this.Server.ClientDisconnected += Server_ClientDisconnected;
+
+            this.ServerList = new ServerInfoManager();
+            this.ChannelClients = new List<LoginClient>();
         }
 
         private void Server_ClientDisconnected(LoginClient client)

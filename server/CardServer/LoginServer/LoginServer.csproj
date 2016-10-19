@@ -49,7 +49,9 @@
   <ItemGroup>
     <Compile Include="ConfFile\LoginConf.cs" />
     <Compile Include="ConfFile\LoginConsoleCommands.cs" />
+    <Compile Include="Database\Account.cs" />
     <Compile Include="LoginServer.cs" />
+    <Compile Include="Network\Handlers\Internal.cs" />
     <Compile Include="Network\Handlers\LoginServerHandlers.cs" />
     <Compile Include="Network\LoginClient.cs" />
     <Compile Include="Program.cs" />
