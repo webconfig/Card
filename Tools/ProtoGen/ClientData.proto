@@ -1,0 +1,10 @@
+package google.protobuf;
+option optimize_for = SPEED;
+
+message ClientLogin {
+  required string UserName = 1;
+  required string Password = 2;
+}
+message ClientResult {
+  required bool Result = 1;
+}
