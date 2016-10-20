@@ -6,9 +6,6 @@ namespace Comm.Network
     /// </summary>
     public static class Op
     {
-        // Login Server
-        // ------------------------------------------------------------------
-        public const int Login = 0x0001;
 
         public static class Internal
         {
@@ -16,7 +13,10 @@ namespace Comm.Network
             public const int LoginResult = 0x00000002;
             public const int ChannelStatus= 0x00000003;
         }
-
+        public static class Client
+        {
+            public const int Login = 0x10000001;
+        }
 
         /// <summary>
         /// Returns name of op code, if it's defined.
