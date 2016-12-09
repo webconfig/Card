@@ -23,17 +23,11 @@ namespace ChannelServer
         /// 配置
         /// </summary>
 		public ChannelConf Conf { get; private set; }
-        /// <summary>
-        /// 连接登陆服务器
-        /// </summary>
-		public ChannelClient LoginServer { get; private set; }
-        /// <summary>
-        /// 重连登陆服务器间歇时间
-        /// </summary>
-        private const int LoginTryTime = 10 * 1000;
         private bool _running;
 
         public ChannelConsoleCommands ConsoleCommands { get; private set; }
+
+        //public PokerManager Poker;
 
         private ChannelServer()
         {
@@ -109,6 +103,15 @@ namespace ChannelServer
             this.ConsoleCommands.Wait();
         }
 
+        #region 连接登陆服务器
+        /// <summary>
+        /// 连接登陆服务器
+        /// </summary>
+        public ChannelClient LoginServer { get; private set; }
+        /// <summary>
+        /// 重连登陆服务器间歇时间
+        /// </summary>
+        private const int LoginTryTime = 10 * 1000;
         /// <summary>
         /// 连接登陆服务器
         /// </summary>
@@ -158,13 +161,14 @@ namespace ChannelServer
             Log.Info("成功连接登陆服务器:'{0}'", this.LoginServer.Address);
             Log.WriteLine();
         }
+        #endregion
 
         /// <summary>
-		/// 处理异常
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="e"></param>
-		private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        /// 处理异常
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             try
             {

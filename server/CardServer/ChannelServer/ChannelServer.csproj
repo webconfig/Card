@@ -55,6 +55,12 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="proto\model.cs" />
+    <Compile Include="Server\Card.cs" />
+    <Compile Include="Server\Deck.cs" />
+    <Compile Include="Server\Observer.cs" />
+    <Compile Include="Server\PokerManager.cs" />
+    <Compile Include="Server\PokerPlayer.cs" />
+    <Compile Include="Server\PokerTable.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
