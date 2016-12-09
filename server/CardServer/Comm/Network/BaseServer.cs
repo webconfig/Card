@@ -48,16 +48,74 @@ namespace Comm.Network
 				_socket.Bind(endPoint);
 				_socket.Listen(10);
 
-				_socket.BeginAccept(this.OnAccept, _socket);
+                //_socket.BeginAccept(this.OnAccept, _socket);
+                AcceptAsync();
 
-				Log.Status("Server ready, listening on {0}.", _socket.LocalEndPoint);
+                Log.Status("Server ready, listening on {0}.", _socket.LocalEndPoint);
 			}
 			catch (Exception ex)
 			{
-				Log.Exception(ex, "Unable to set up socket; perhaps you're already running a server?");
+                if (this._socket != null)
+                {
+                    this._socket.Close();
+                }
+                Log.Exception(ex, "Unable to set up socket; perhaps you're already running a server?");
 				//CliUtil.Exit(1);
 			}
 		}
+        #endregion
+
+        #region 接受连接
+        private void AcceptAsync()
+        {
+            try
+            {
+                if (this._socket != null)
+                {
+                    SocketAsyncEventArgs e = new SocketAsyncEventArgs();
+                    e.Completed += new EventHandler<SocketAsyncEventArgs>(this.AcceptAsyncCompleted);
+                    this._socket.AcceptAsync(e);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Exception(ex,"AcceptAsync is error!");
+            }
+        }
+        private void AcceptAsyncCompleted(object sender, SocketAsyncEventArgs e)
+        {
+
+            var client = new TClient();
+            client.Socket = e.AcceptSocket;
+            try
+            {
+                client.Socket = e.AcceptSocket;
+                client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
+                this.AddClient(client);
+                Log.Info("客户端建立连接->{0}", client.Address);
+                this.OnClientConnected(client);
+            }
+            catch (Exception ex)
+            {
+                Log.Exception(ex, "While accepting connection.");
+            }
+            finally
+            {
+                if (sock != null)
+                {
+                    try
+                    {
+                        sock.Close();
+                    }
+                    catch
+                    {
+                    }
+                }
+                e.Dispose();
+                this.AcceptAsync();
+            }
+
+        }
         #endregion
 
         /// <summary>
@@ -74,43 +132,43 @@ namespace Comm.Network
 			{ }
 		}
 
-		/// <summary>
-		/// 建立一个新的连接
-		/// </summary>
-		/// <param name="result"></param>
-		private void OnAccept(IAsyncResult result)
-		{
-			var client = new TClient();
+		///// <summary>
+		///// 建立一个新的连接
+		///// </summary>
+		///// <param name="result"></param>
+		//private void OnAccept(IAsyncResult result)
+		//{
+		//	var client = new TClient();
 
-			try
-			{
-				client.Socket = (result.AsyncState as Socket).EndAccept(result);
-				client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
-				this.AddClient(client);
-				Log.Info("客户端建立连接->{0}", client.Address);
-				this.OnClientConnected(client);
-			}
-			catch (ObjectDisposedException)
-			{
-			}
-			catch (Exception ex)
-			{
-				Log.Exception(ex, "While accepting connection.");
-			}
-			finally
-			{
-				_socket.BeginAccept(this.OnAccept, _socket);
-			}
-		}
+		//	try
+		//	{
+		//		client.Socket = (result.AsyncState as Socket).EndAccept(result);
+		//		client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
+		//		this.AddClient(client);
+		//		Log.Info("客户端建立连接->{0}", client.Address);
+		//		this.OnClientConnected(client);
+		//	}
+		//	catch (ObjectDisposedException)
+		//	{
+		//	}
+		//	catch (Exception ex)
+		//	{
+		//		Log.Exception(ex, "While accepting connection.");
+		//	}
+		//	finally
+		//	{
+		//		_socket.BeginAccept(this.OnAccept, _socket);
+		//	}
+		//}
 
-		/// <summary>
-		/// Starts receiving for client.
-		/// </summary>
-		/// <param name="client"></param>
-		public void AddReceivingClient(TClient client)
-		{
-			client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
-		}
+		///// <summary>
+		///// Starts receiving for client.
+		///// </summary>
+		///// <param name="client"></param>
+		//public void AddReceivingClient(TClient client)
+		//{
+		//	client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
+		//}
 
 		/// <summary>
         /// 接受客户端数据
@@ -171,9 +229,6 @@ namespace Comm.Network
 				this.KillAndRemoveClient(client);
 				this.OnClientDisconnected(client);
 			}
-			catch (ObjectDisposedException)
-			{
-			}
 			catch (Exception ex)
 			{
 				Log.Exception(ex, "While receiving data from '{0}'.", client.Address);
@@ -182,27 +237,27 @@ namespace Comm.Network
 			}
 		}
 
-		/// <summary>
-        /// 关闭并且移除客户端
-        /// </summary>
-        /// <param name="client"></param>
-		protected void KillAndRemoveClient(TClient client)
-		{
-			client.Kill();
-			this.RemoveClient(client);
-		}
-
-		/// <summary>
+        /// <summary>
         /// 添加客户端
         /// </summary>
         /// <param name="client"></param>
-		protected void AddClient(TClient client)
+        protected void AddClient(TClient client)
+        {
+            lock (this.Clients)
+            {
+                this.Clients.Add(client);
+                //Log.Status("Connected clients: {0}", _clients.Count);
+            }
+        }
+
+        /// <summary>
+        /// 关闭并且移除客户端
+        /// </summary>
+        /// <param name="client"></param>
+        protected void KillAndRemoveClient(TClient client)
 		{
-			lock (this.Clients)
-			{
-				this.Clients.Add(client);
-				//Log.Status("Connected clients: {0}", _clients.Count);
-			}
+			client.Kill();
+			this.RemoveClient(client);
 		}
 
 		/// <summary>
@@ -217,7 +272,6 @@ namespace Comm.Network
 				//Log.Status("Connected clients: {0}", _clients.Count);
 			}
 		}
-
 
         /// <summary>
         /// 处理包数据

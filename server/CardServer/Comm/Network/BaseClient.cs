@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using Comm.Util;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Comm.Network
 {
