@@ -11,7 +11,6 @@ namespace LoginServer
     {
         public static readonly LoginServer Instance = new LoginServer();
         private bool _running = false;
-
         public BaseServer<LoginClient> Server { get; set; }
         public LoginConf Conf { get; private set; }
         public ServerInfoManager ServerList { get; private set; }
