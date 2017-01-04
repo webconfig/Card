@@ -8,7 +8,7 @@ namespace Comm.Network.Iocp
     /// <summary>
     /// 与每个客户Socket相关联，进行Send和Receive投递时所需要的参数
     /// </summary>
-    internal sealed class IoContextPool<TClient> where TClient : BaseClient
+    internal sealed class IoContextPool<TClient> where TClient : BaseClient, new()
     {
         List<TClient> pool;        //为每一个Socket客户端分配一个SocketAsyncEventArgs，用一个List管理，在程序启动时建立。
         Int32 capacity;                         //pool对象池的容量

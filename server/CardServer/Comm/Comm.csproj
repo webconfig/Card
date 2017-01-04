@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CallBack.cs" />
     <Compile Include="Configuration\BaseConf.cs" />
     <Compile Include="Configuration\ConfFile.cs" />
     <Compile Include="Configuration\Files\Database.cs" />

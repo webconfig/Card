@@ -68,11 +68,20 @@ namespace Comm.Network
                 SocketAsyncEventArgs ioContext = new SocketAsyncEventArgs();
                 ioContext.SetBuffer(new Byte[this.bufferSize], 0, this.bufferSize);
                 TClient client = new TClient();
-                client.Init(ioContext);
+                client.Init(ioContext, bufferSize, Handle, CloseClientSocket);
                 this.ioContextPool.Add(client);
             }
         }
-
+        /// <summary>
+        /// 处理数据
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="command"></param>
+        /// <param name="datas"></param>
+        public void Handle(BaseClient client, int command, byte[] datas)
+        {
+            Handlers.Handle(client as TClient, command, datas);
+        }
         #region 开始结束
         /// <summary>
         /// 启动服务，开始监听
@@ -197,10 +206,10 @@ namespace Comm.Network
         #endregion
 
         #region 关闭客户端连接
-        public void CloseClientSocket(TClient client)
+        public void CloseClientSocket(BaseClient client)
         {
             Interlocked.Decrement(ref this.numConnectedSockets);
-            this.ioContextPool.Push(client); // SocketAsyncEventArg 对象被释放，压入可重用队列。
+            this.ioContextPool.Push(client as TClient); // SocketAsyncEventArg 对象被释放，压入可重用队列。
             Console.WriteLine(String.Format("客户 {0} 断开, 共有 {1} 个连接。", client.socket.RemoteEndPoint.ToString(), this.numConnectedSockets));
             try
             {
