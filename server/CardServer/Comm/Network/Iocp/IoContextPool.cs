@@ -8,15 +8,15 @@ namespace Comm.Network.Iocp
     /// <summary>
     /// 与每个客户Socket相关联，进行Send和Receive投递时所需要的参数
     /// </summary>
-    internal sealed class IoContextPool
+    internal sealed class IoContextPool<TClient> where TClient : BaseClient
     {
-        List<BaseClient> pool;        //为每一个Socket客户端分配一个SocketAsyncEventArgs，用一个List管理，在程序启动时建立。
+        List<TClient> pool;        //为每一个Socket客户端分配一个SocketAsyncEventArgs，用一个List管理，在程序启动时建立。
         Int32 capacity;                         //pool对象池的容量
         Int32 boundary;                         //已分配和未分配对象的边界，大的是已经分配的，小的是未分配的
 
         internal IoContextPool(Int32 capacity)
         {
-            this.pool = new List<BaseClient>(capacity);
+            this.pool = new List<TClient>(capacity);
             this.boundary = 0;
             this.capacity = capacity;
         }
@@ -27,7 +27,7 @@ namespace Comm.Network.Iocp
         /// </summary>
         /// <param name="arg"></param>
         /// <returns></returns>
-        internal bool Add(BaseClient arg)
+        internal bool Add(TClient arg)
         {
             if (arg != null && pool.Count < capacity)
             {
@@ -56,7 +56,7 @@ namespace Comm.Network.Iocp
         /// 从对象池中取出一个对象，交给一个socket来进行投递请求操作
         /// </summary>
         /// <returns></returns>
-        internal BaseClient Pop()
+        internal TClient Pop()
         {
             lock (this.pool)
             {
@@ -75,7 +75,7 @@ namespace Comm.Network.Iocp
         /// </summary>
         /// <param name="arg"></param>
         /// <returns></returns>
-        internal bool Push(BaseClient arg)
+        internal bool Push(TClient arg)
         {
             if (arg != null)
             {

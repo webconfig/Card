@@ -9,9 +9,9 @@ namespace Comm.Network
     /// 处理数据
     /// </summary>
     /// <typeparam name="TClient"></typeparam>
-    public abstract class PacketHandlerManager
+    public abstract class PacketHandlerManager<TClient> where TClient : BaseClient
     {
-        public delegate void PacketHandlerFunc(SocketAsyncEventArgs client,Socket socket, byte[] datas);
+        public delegate void PacketHandlerFunc(TClient client, byte[] datas);
 
         private Dictionary<int, PacketHandlerFunc> _handlers;
 
@@ -52,7 +52,7 @@ namespace Comm.Network
         /// <param name="client"></param>
         /// <param name="command"></param>
         /// <param name="datas"></param>
-        public virtual void Handle(SocketAsyncEventArgs client, Socket socket, int command, byte[] datas)
+        public virtual void Handle(TClient client, int command, byte[] datas)
         {
             PacketHandlerFunc handler;
             if (!_handlers.TryGetValue(command, out handler))
@@ -63,7 +63,7 @@ namespace Comm.Network
 
             try
             {
-                handler(client, socket, datas);
+                handler(client, datas);
             }
             catch (PacketElementTypeException ex)
             {
@@ -76,7 +76,7 @@ namespace Comm.Network
             }
         }
 
-        public virtual void UnknownPacket(SocketAsyncEventArgs client, int command)
+        public virtual void UnknownPacket(BaseClient client, int command)
         {
             Log.Unimplemented("PacketHandlerManager: Handler for '{0:X4}', '{1}'.", command, Op.GetName(command));
         }

@@ -12,19 +12,20 @@ namespace Comm.Network
     /// </summary>
     public class BaseClient
     {
-        private BaseServer server;
         public SocketAsyncEventArgs asyn;
         public Socket socket { get; set; }
         public List<byte> AllDatas;
         public ClientState State { get; set; }
-        public BaseClient(BaseServer _server,SocketAsyncEventArgs _asyn)
+        public BaseClient()
         {
-            server = _server;
+
+        }
+        public void Init(SocketAsyncEventArgs _asyn)
+        {
             asyn = _asyn;
             asyn.Completed += Asyn_Completed;
             AllDatas = new List<byte>();
         }
-
         private void Asyn_Completed(object sender, SocketAsyncEventArgs e)
         {
             switch (e.LastOperation)
@@ -63,14 +64,35 @@ namespace Comm.Network
                     if (socket.Available == 0)
                     {
                         //获取接收到的数据
-                        byte[] ByteArray = new byte[asyn.BytesTransferred];
-                        Array.Copy(asyn.Buffer, 0, ByteArray, 0, ByteArray.Length);
+                        //byte[] ByteArray = new byte[asyn.BytesTransferred];
+                        //Array.Copy(asyn.Buffer, 0, ByteArray, 0, ByteArray.Length);
 
                         //拷贝到缓存队列
                         for (int i = 0; i < asyn.BytesTransferred; i++)
                         {
                             AllDatas.Add(asyn.Buffer[i]);
                         }
+                        //===解析数据===
+                        int len = 0, command = 0;
+                        do
+                        {
+                            if (AllDatas.Count > 7)//最小的包应该有8个字节
+                            {
+                                NetHelp.BytesToInt(AllDatas, 0, ref len);//读取消息体的长度
+                                len += 4;
+                                //读取消息体内容
+                                if (len <= AllDatas.Count)
+                                {
+                                    NetHelp.BytesToInt(AllDatas, 4, ref command);//操作命令
+                                    byte[] msgBytes = new byte[len - 8];
+                                    AllDatas.CopyTo(8, msgBytes, 0, msgBytes.Length);
+                                    AllDatas.RemoveRange(0, len);
+                                    //server.Handlers.Handle(this, command, msgBytes);
+                                }
+                                else { break; }
+                            }
+                            else { break; }
+                        } while (true);
                     }
                     else if (!socket.ReceiveAsync(asyn))    //为接收下一段数据，投递接收请求，这个函数有可能同步完成，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件
                     {
@@ -85,7 +107,7 @@ namespace Comm.Network
             }
             else
             {
-                server.CloseClientSocket(this);
+                //server.CloseClientSocket(this);
             }
         }
         #endregion
@@ -118,7 +140,7 @@ namespace Comm.Network
             if (asyn.SocketError == SocketError.Success)
             {
                 //接收时根据接收的字节数收缩了缓冲区的大小，因此投递接收请求时，恢复缓冲区大小
-                asyn.SetBuffer(0, server.bufferSize);
+                //asyn.SetBuffer(0, server.bufferSize);
                 if (!socket.ReceiveAsync(asyn))     //投递接收请求
                 {
                     // 同步接收时处理接收完成事件
@@ -140,9 +162,10 @@ namespace Comm.Network
         private void ProcessError()
         {
             IPEndPoint localEp = socket.LocalEndPoint as IPEndPoint;
-            server.CloseClientSocket(this);
+            //server.CloseClientSocket(this);
             Console.WriteLine(String.Format("套接字错误 {0}, IP {1}, 操作 {2}。", (Int32)asyn.SocketError, localEp, asyn.LastOperation));
         }
+        #endregion
     }
     /// <summary>
     /// 客户端状态

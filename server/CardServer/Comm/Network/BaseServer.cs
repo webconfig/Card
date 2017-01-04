@@ -12,8 +12,8 @@ namespace Comm.Network
 	/// <summary>
     /// 服务器基类
     /// </summary>
-	public class BaseServer
-	{
+	public class BaseServer<TClient> where TClient : BaseClient,new()
+    {
         /// <summary>
         /// 监听Socket，用于接受客户端的连接请求
         /// </summary>
@@ -42,11 +42,11 @@ namespace Comm.Network
         /// <summary>
         /// 完成端口上进行投递所用的IoContext对象池
         /// </summary>
-        private IoContextPool ioContextPool;
+        private IoContextPool<TClient> ioContextPool;
 
         //=================================
-        public PacketHandlerManager Handlers { get; set; }
-        public List<BaseClient> Clients=new List<BaseClient>();
+        public PacketHandlerManager<TClient> Handlers { get; set; }
+        public List<TClient> Clients=new List<TClient>();
         //==================================
 
         /// <summary>
@@ -60,15 +60,16 @@ namespace Comm.Network
             this.numConnections = numConnections;
             this.bufferSize = bufferSize;
 
-            this.ioContextPool = new IoContextPool(numConnections);
+            this.ioContextPool = new IoContextPool<TClient>(numConnections);
 
             // 为IoContextPool预分配SocketAsyncEventArgs对象
             for (Int32 i = 0; i < this.numConnections; i++)
             {
                 SocketAsyncEventArgs ioContext = new SocketAsyncEventArgs();
                 ioContext.SetBuffer(new Byte[this.bufferSize], 0, this.bufferSize);
-                // 将预分配的对象加入SocketAsyncEventArgs对象池中
-                this.ioContextPool.Add(new BaseClient(ioContext));
+                TClient client = new TClient();
+                client.Init(ioContext);
+                this.ioContextPool.Add(client);
             }
         }
 
@@ -164,7 +165,7 @@ namespace Comm.Network
             {
                 try
                 {
-                    BaseClient client = this.ioContextPool.Pop();
+                    TClient client = this.ioContextPool.Pop();
                     if (client != null)
                     {
                         Interlocked.Increment(ref this.numConnectedSockets);
@@ -196,7 +197,7 @@ namespace Comm.Network
         #endregion
 
         #region 关闭客户端连接
-        public void CloseClientSocket(BaseClient client)
+        public void CloseClientSocket(TClient client)
         {
             Interlocked.Decrement(ref this.numConnectedSockets);
             this.ioContextPool.Push(client); // SocketAsyncEventArg 对象被释放，压入可重用队列。
