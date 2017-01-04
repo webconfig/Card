@@ -1,12 +1,14 @@
 ﻿using Comm.Network;
 using google.protobuf;
 using Comm.Util;
+using System.Net.Sockets;
+
 namespace LoginServer.Network.Handlers
 {
     public partial class LoginServerHandlers : PacketHandlerManager<LoginClient>
     {
         [PacketHandler(Op.Client.Login)]
-        public void ClientLogin(LoginClient client, byte[] datas)
+        public void ClientLogin(BaseClient client, byte[] datas)
         {
             ClientLogin model_login;
             NetHelp.RecvData<ClientLogin>(datas, out model_login);
@@ -14,7 +16,7 @@ namespace LoginServer.Network.Handlers
 
             ClientResult result = new ClientResult();
             result.Result = true;
-            NetHelp.Send<ClientResult>(Op.Client.Login, result, client.Socket);
+            NetHelp.Send<ClientResult>(Op.Client.Login, result, client.socket);
         }
     }
 }

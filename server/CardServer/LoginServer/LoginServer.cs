@@ -18,21 +18,12 @@ namespace LoginServer
         public List<LoginClient> ChannelClients { get; private set; }
         private LoginServer()
         {
-            this.Server = new BaseServer<LoginClient>();
+            this.Server = new BaseServer<LoginClient>(2000,1024*5);
             this.Server.Handlers = new LoginServerHandlers();
             this.Server.Handlers.AutoLoad();
-            this.Server.ClientDisconnected += Server_ClientDisconnected;
-
             this.ServerList = new ServerInfoManager();
             this.ChannelClients = new List<LoginClient>();
         }
-
-        private void Server_ClientDisconnected(LoginClient client)
-        {
-            
-        }
-
-
         public void Run()
         {
             if (_running)

@@ -24,7 +24,7 @@ namespace LoginServer.Network.Handlers
 
             RegisterResult result = new RegisterResult();
             result.Success = true;
-            NetHelp.Send<RegisterResult>(Op.Internal.LoginResult, result, client.Socket);
+            NetHelp.Send<RegisterResult>(Op.Internal.LoginResult, result, client.socket);
         }
         [PacketHandler(Op.Internal.ChannelStatus)]
         public void Internal_ChannelStatus(LoginClient client, byte[] datas)
