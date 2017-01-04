@@ -1,307 +1,219 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Text;
 using System.Net.Sockets;
+using System.Threading;
+using System.Net;
 using Comm.Util;
+using Comm.Network.Iocp;
 
 namespace Comm.Network
 {
 	/// <summary>
     /// 服务器基类
     /// </summary>
-    /// <typeparam name="TClient"></typeparam>
-	public class BaseServer<TClient> where TClient : BaseClient, new()
+	public class BaseServer
 	{
-		private Socket _socket;
-		public List<TClient> Clients { get; set; }
-        public PacketHandlerManager<TClient> Handlers { get; set; }
         /// <summary>
-        /// 客户端连接
+        /// 监听Socket，用于接受客户端的连接请求
         /// </summary>
-        public event ClientConnectionEventHandler ClientConnected;
+        private Socket listenSocket;
 
-		/// <summary>
-        /// 客户端断开连接
+        /// <summary>
+        /// 用于服务器执行的互斥同步对象
         /// </summary>
-		public event ClientConnectionEventHandler ClientDisconnected;
+        private static Mutex mutex = new Mutex();
 
-        public BaseServer()
-		{
-			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			_socket.NoDelay = true;
-			this.Clients = new List<TClient>();
-		}
+        /// <summary>
+        /// 用于每个I/O Socket操作的缓冲区大小
+        /// </summary>
+        public Int32 bufferSize;
 
-        #region 启动
-        public void Start(int port)
-		{
-			this.Start(new IPEndPoint(IPAddress.Any, port));
-		}
-		public void Start(string host, int port)
-		{
-			this.Start(new IPEndPoint(IPAddress.Parse(host), port));
-		}
-		private void Start(IPEndPoint endPoint)
-		{
-			try
-			{
-				_socket.Bind(endPoint);
-				_socket.Listen(10);
+        /// <summary>
+        /// 服务器上连接的客户端总数
+        /// </summary>
+        private Int32 numConnectedSockets;
 
-                //_socket.BeginAccept(this.OnAccept, _socket);
-                AcceptAsync();
+        /// <summary>
+        /// 服务器能接受的最大连接数量
+        /// </summary>
+        private Int32 numConnections;
 
-                Log.Status("Server ready, listening on {0}.", _socket.LocalEndPoint);
-			}
-			catch (Exception ex)
-			{
-                if (this._socket != null)
-                {
-                    this._socket.Close();
-                }
-                Log.Exception(ex, "Unable to set up socket; perhaps you're already running a server?");
-				//CliUtil.Exit(1);
-			}
-		}
+        /// <summary>
+        /// 完成端口上进行投递所用的IoContext对象池
+        /// </summary>
+        private IoContextPool ioContextPool;
+
+        //=================================
+        public PacketHandlerManager Handlers { get; set; }
+        public List<BaseClient> Clients=new List<BaseClient>();
+        //==================================
+
+        /// <summary>
+        /// 构造函数，建立一个未初始化的服务器实例
+        /// </summary>
+        /// <param name="numConnections">服务器的最大连接数据</param>
+        /// <param name="bufferSize"></param>
+        public BaseServer(Int32 numConnections, Int32 bufferSize)
+        {
+            this.numConnectedSockets = 0;
+            this.numConnections = numConnections;
+            this.bufferSize = bufferSize;
+
+            this.ioContextPool = new IoContextPool(numConnections);
+
+            // 为IoContextPool预分配SocketAsyncEventArgs对象
+            for (Int32 i = 0; i < this.numConnections; i++)
+            {
+                SocketAsyncEventArgs ioContext = new SocketAsyncEventArgs();
+                ioContext.SetBuffer(new Byte[this.bufferSize], 0, this.bufferSize);
+                // 将预分配的对象加入SocketAsyncEventArgs对象池中
+                this.ioContextPool.Add(new BaseClient(ioContext));
+            }
+        }
+
+        #region 开始结束
+        /// <summary>
+        /// 启动服务，开始监听
+        /// </summary>
+        /// <param name="port">Port where the server will listen for connection requests.</param>
+        public void Start(Int32 port)
+        {
+            // 获得主机相关信息
+            IPAddress[] addressList = Dns.GetHostEntry(Environment.MachineName).AddressList;
+            IPEndPoint localEndPoint = new IPEndPoint(addressList[addressList.Length - 1], port);
+
+            // 创建监听socket
+            this.listenSocket = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.listenSocket.ReceiveBufferSize = this.bufferSize;
+            this.listenSocket.SendBufferSize = this.bufferSize;
+
+            if (localEndPoint.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                // 配置监听socket为 dual-mode (IPv4 & IPv6) 
+                // 27 is equivalent to IPV6_V6ONLY socket option in the winsock snippet below,
+                this.listenSocket.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, false);
+                this.listenSocket.Bind(new IPEndPoint(IPAddress.IPv6Any, localEndPoint.Port));
+            }
+            else
+            {
+                this.listenSocket.Bind(localEndPoint);
+            }
+
+            // 开始监听
+            this.listenSocket.Listen(this.numConnections);
+
+            // 在监听Socket上投递一个接受请求。
+            this.StartAccept(null);
+
+            // Blocks the current thread to receive incoming messages.
+            mutex.WaitOne();
+        }
+
+        /// <summary>
+        /// 停止服务
+        /// </summary>
+        public void Stop()
+        {
+            this.listenSocket.Close();
+            mutex.ReleaseMutex();
+        }
         #endregion
 
         #region 接受连接
-        private void AcceptAsync()
+        /// <summary>
+        /// 从客户端开始接受一个连接操作
+        /// </summary>
+        /// <param name="acceptEventArg">The context object to use when issuing 
+        /// the accept operation on the server's listening socket.</param>
+        private void StartAccept(SocketAsyncEventArgs acceptEventArg)
         {
-            try
+            if (acceptEventArg == null)
             {
-                if (this._socket != null)
-                {
-                    SocketAsyncEventArgs e = new SocketAsyncEventArgs();
-                    e.Completed += new EventHandler<SocketAsyncEventArgs>(this.AcceptAsyncCompleted);
-                    this._socket.AcceptAsync(e);
-                }
+                acceptEventArg = new SocketAsyncEventArgs();
+                acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
             }
-            catch (Exception ex)
+            else
             {
-                Log.Exception(ex,"AcceptAsync is error!");
+                // 重用前进行对象清理
+                acceptEventArg.AcceptSocket = null;
+            }
+
+            if (!this.listenSocket.AcceptAsync(acceptEventArg))
+            {
+                this.ProcessAccept(acceptEventArg);
             }
         }
-        private void AcceptAsyncCompleted(object sender, SocketAsyncEventArgs e)
+        /// <summary>
+        /// accept 操作完成时回调函数
+        /// </summary>
+        /// <param name="sender">Object who raised the event.</param>
+        /// <param name="e">SocketAsyncEventArg associated with the completed accept operation.</param>
+        private void OnAcceptCompleted(object sender, SocketAsyncEventArgs e)
         {
-
-            var client = new TClient();
-            client.Socket = e.AcceptSocket;
-            try
+            this.ProcessAccept(e);
+        }
+        /// <summary>
+        /// 有客户端连接上
+        /// </summary>
+        /// <param name="e">SocketAsyncEventArg associated with the completed accept operation.</param>
+        private void ProcessAccept(SocketAsyncEventArgs e)
+        {
+            Socket s = e.AcceptSocket;
+            if (s.Connected)
             {
-                client.Socket = e.AcceptSocket;
-                client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
-                this.AddClient(client);
-                Log.Info("客户端建立连接->{0}", client.Address);
-                this.OnClientConnected(client);
-            }
-            catch (Exception ex)
-            {
-                Log.Exception(ex, "While accepting connection.");
-            }
-            finally
-            {
-                if (sock != null)
+                try
                 {
-                    try
+                    BaseClient client = this.ioContextPool.Pop();
+                    if (client != null)
                     {
-                        sock.Close();
+                        Interlocked.Increment(ref this.numConnectedSockets);
+                        Console.WriteLine(String.Format("客户 {0} 连入, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), this.numConnectedSockets));
+                        client.socket = s;
+                        Clients.Add(client);
+                        client.BeginRecv();//开始接受数据
                     }
-                    catch
+                    else//已经达到最大客户连接数量，在这接受连接，发送“连接已经达到最大数”，然后断开连接
                     {
+                        s.Send(Encoding.Default.GetBytes("连接已经达到最大数!"));
+                        string outStr = String.Format("连接已满，拒绝 {0} 的连接。", s.RemoteEndPoint);
+                        //mainForm.Invoke(mainForm.setlistboxcallback, outStr);
+                        s.Close();
                     }
                 }
-                e.Dispose();
-                this.AcceptAsync();
+                catch (SocketException ex)
+                {
+                    Console.WriteLine(String.Format("接收客户 {0} 数据出错, 异常信息： {1} 。", s.RemoteEndPoint, ex.ToString()));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("异常：" + ex.ToString());
+                }
+                // 投递下一个接受请求
+                this.StartAccept(e);
             }
-
         }
         #endregion
 
-        /// <summary>
-        /// 关闭
-        /// </summary>
-        public void Stop()
-		{
-			try
-			{
-				_socket.Shutdown(SocketShutdown.Both);
-				_socket.Close();
-			}
-			catch
-			{ }
-		}
-
-		///// <summary>
-		///// 建立一个新的连接
-		///// </summary>
-		///// <param name="result"></param>
-		//private void OnAccept(IAsyncResult result)
-		//{
-		//	var client = new TClient();
-
-		//	try
-		//	{
-		//		client.Socket = (result.AsyncState as Socket).EndAccept(result);
-		//		client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
-		//		this.AddClient(client);
-		//		Log.Info("客户端建立连接->{0}", client.Address);
-		//		this.OnClientConnected(client);
-		//	}
-		//	catch (ObjectDisposedException)
-		//	{
-		//	}
-		//	catch (Exception ex)
-		//	{
-		//		Log.Exception(ex, "While accepting connection.");
-		//	}
-		//	finally
-		//	{
-		//		_socket.BeginAccept(this.OnAccept, _socket);
-		//	}
-		//}
-
-		///// <summary>
-		///// Starts receiving for client.
-		///// </summary>
-		///// <param name="client"></param>
-		//public void AddReceivingClient(TClient client)
-		//{
-		//	client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
-		//}
-
-		/// <summary>
-        /// 接受客户端数据
-        /// </summary>
-        /// <param name="result"></param>
-		protected void OnReceive(IAsyncResult result)
-		{
-			var client = result.AsyncState as TClient;
-			try
-			{
-				int bytesReceived = client.Socket.EndReceive(result);
-				if (bytesReceived == 0)
-				{
-					Log.Info("连接被关闭->{0}", client.Address);
-					this.KillAndRemoveClient(client);
-					this.OnClientDisconnected(client);
-					return;
-				}
-                //拷贝到缓存队列
-                for (int i = 0; i < bytesReceived; i++)
-                {
-                    client.AllDatas.Add(client.Buffer[i]);
-                }
-                //===解析数据===
-                int len = 0, command=0;
-                do
-                {
-                    if (client.AllDatas.Count > 7)//最小的包应该有8个字节
-                    {
-                        NetHelp.BytesToInt(client.AllDatas, 0, ref len);//读取消息体的长度
-                        len += 4;
-                        //读取消息体内容
-                        if (len <= client.AllDatas.Count)
-                        {
-                            NetHelp.BytesToInt(client.AllDatas, 4, ref command);//操作命令
-                            byte[] msgBytes = new byte[len - 8];
-                            client.AllDatas.CopyTo(8, msgBytes, 0, msgBytes.Length);
-                            client.AllDatas.RemoveRange(0, len);
-                            HandleBuffer(client, command, msgBytes);
-                        }
-                        else { break; }
-                    }
-                    else { break; }
-                } while (true);
-                //客户端自己关闭
-                if (client.State == ClientState.Dead)
-				{
-					Log.Info("Killed connection from '{0}'.", client.Address);
-					this.RemoveClient(client);
-					this.OnClientDisconnected(client);
-					return;
-				}
-				client.Socket.BeginReceive(client.Buffer, 0, client.Buffer.Length, SocketFlags.None, this.OnReceive, client);
-			}
-			catch (SocketException)
-			{
-				Log.Info("Connection lost from '{0}'.", client.Address);
-				this.KillAndRemoveClient(client);
-				this.OnClientDisconnected(client);
-			}
-			catch (Exception ex)
-			{
-				Log.Exception(ex, "While receiving data from '{0}'.", client.Address);
-				this.KillAndRemoveClient(client);
-				this.OnClientDisconnected(client);
-			}
-		}
-
-        /// <summary>
-        /// 添加客户端
-        /// </summary>
-        /// <param name="client"></param>
-        protected void AddClient(TClient client)
+        #region 关闭客户端连接
+        public void CloseClientSocket(BaseClient client)
         {
-            lock (this.Clients)
-            {
-                this.Clients.Add(client);
-                //Log.Status("Connected clients: {0}", _clients.Count);
-            }
-        }
-
-        /// <summary>
-        /// 关闭并且移除客户端
-        /// </summary>
-        /// <param name="client"></param>
-        protected void KillAndRemoveClient(TClient client)
-		{
-			client.Kill();
-			this.RemoveClient(client);
-		}
-
-		/// <summary>
-        /// 删除客户端
-        /// </summary>
-        /// <param name="client"></param>
-		protected void RemoveClient(TClient client)
-		{
-			lock (this.Clients)
-			{
-				this.Clients.Remove(client);
-				//Log.Status("Connected clients: {0}", _clients.Count);
-			}
-		}
-
-        /// <summary>
-        /// 处理包数据
-        /// </summary>
-        /// <param name="client"></param>
-        /// <param name="buffer"></param>
-		private void HandleBuffer(TClient client,int command, byte[] buffer)
-        {
+            Interlocked.Decrement(ref this.numConnectedSockets);
+            this.ioContextPool.Push(client); // SocketAsyncEventArg 对象被释放，压入可重用队列。
+            Console.WriteLine(String.Format("客户 {0} 断开, 共有 {1} 个连接。", client.socket.RemoteEndPoint.ToString(), this.numConnectedSockets));
             try
             {
-                this.Handlers.Handle(client, command, buffer);
+                client.socket.Shutdown(SocketShutdown.Send);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Log.Exception(ex, "There has been a problem while handling '{0:X4}', '{1}'.", command, Op.GetName(command));
+                // Throw if client has closed, so it is not necessary to catch.
+            }
+            finally
+            {
+                client.socket.Close();
             }
         }
-
-		protected virtual void OnClientConnected(TClient client)
-		{
-			if (this.ClientConnected != null)
-				this.ClientConnected(client);
-		}
-
-		protected virtual void OnClientDisconnected(TClient client)
-		{
-			if (this.ClientDisconnected != null)
-				this.ClientDisconnected(client);
-		}
-
-		public delegate void ClientConnectionEventHandler(TClient client);
+        #endregion
 	}
 }

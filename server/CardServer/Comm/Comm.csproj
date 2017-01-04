@@ -55,13 +55,12 @@
     <Compile Include="ConsoleCommands\CommandManager.cs" />
     <Compile Include="ConsoleCommands\ConsoleCommands.cs" />
     <Compile Include="Network\BaseClient.cs" />
+    <Compile Include="Network\BaseServer2.cs" />
     <Compile Include="Network\BaseServer.cs" />
     <Compile Include="Network\data\ChannelState.cs" />
     <Compile Include="Network\data\ServerInfo.cs" />
-    <Compile Include="Network\Iocp\BufferManager.cs" />
-    <Compile Include="Network\Iocp\Connection.cs" />
-    <Compile Include="Network\Iocp\Server.cs" />
-    <Compile Include="Network\Iocp\SocketAsyncEventArgsPool.cs" />
+    <Compile Include="Network\Iocp\IoContextPool.cs" />
+    <Compile Include="Network\Iocp\IoServer.cs" />
     <Compile Include="Network\NetHelp.cs" />
     <Compile Include="Network\Op.cs" />
     <Compile Include="Network\PacketHandlerManager.cs" />
