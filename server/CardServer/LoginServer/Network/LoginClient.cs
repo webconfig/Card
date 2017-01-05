@@ -4,12 +4,8 @@ using LoginServer.Database;
 
 namespace LoginServer
 {
-    public class LoginClient :Comm.Network.BaseClient
+    public class LoginClient
     {
-        public LoginClient() : base()
-        {
-        }
-
         public string Ident { get; set; }
         public Account Account { get; set; }
     }

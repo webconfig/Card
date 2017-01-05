@@ -17,9 +17,9 @@ namespace LoginServer
         public List<LoginClient> ChannelClients { get; private set; }
         private LoginServer()
         {
-            this.Server = new BaseServer<LoginClient>(2000,1024*5);
-            this.Server.Handlers = new LoginServerHandlers();
-            this.Server.Handlers.AutoLoad();
+            LoginServerHandlers Handlers = new LoginServerHandlers();
+            Handlers.AutoLoad();
+            this.Server = new BaseServer<LoginClient>(2000,1024*5, Handlers);
             this.ServerList = new ServerInfoManager();
             this.ChannelClients = new List<LoginClient>();
         }
@@ -28,7 +28,7 @@ namespace LoginServer
             if (_running)
                 throw new Exception("服务器正在运行...");
 
-            CliUtil.WriteHeader("Login Server", ConsoleColor.Magenta);
+            CliUtil.WriteHeader("Login Server "+DateTime.Now.ToString(), ConsoleColor.Magenta);
             CliUtil.LoadingTitle();
             //// Conf
             this.LoadConf(this.Conf = new LoginConf());
