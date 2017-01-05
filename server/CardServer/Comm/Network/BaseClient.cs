@@ -4,14 +4,16 @@ using Comm.Util;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using ProtoBuf;
 
 namespace Comm.Network
 {
     /// <summary>
     /// 客户端基类
     /// </summary>
-    public class BaseClient
+    public class BaseClient<TModel>
     {
+        public TModel t;
         private int bufferSize;
         public SocketAsyncEventArgs asyn;
         public Socket socket { get; set; }
@@ -21,13 +23,13 @@ namespace Comm.Network
         {
 
         }
-        public void Init(SocketAsyncEventArgs _asyn,int _bufferSize, CallBack<BaseClient, int, byte[]> _Handle, CallBack<BaseClient> _CloseSocket)
+        public void Init(SocketAsyncEventArgs _asyn,int _bufferSize, CallBack<BaseClient<TModel>, int, byte[]> _Handle, CallBack<BaseClient<TModel>> _CloseSocket)
         {
             bufferSize = _bufferSize;
             asyn = _asyn;
+            asyn.Completed += Asyn_Completed;
             Handle = _Handle;
             CloseSocket = _CloseSocket;
-            asyn.Completed += Asyn_Completed;
             AllDatas = new List<byte>();
         }
         private void Asyn_Completed(object sender, SocketAsyncEventArgs e)
@@ -46,7 +48,7 @@ namespace Comm.Network
         }
 
         #region 接受数据
-        public CallBack<BaseClient, int, byte[]> Handle;
+        public CallBack<BaseClient<TModel>, int, byte[]> Handle;
         public void BeginRecv()
         {
             if (!socket.ReceiveAsync(asyn))
@@ -118,17 +120,35 @@ namespace Comm.Network
         #endregion
 
         #region 发送
-        public void Send(byte[] datas)
+        public void  Send<T>(int type, T t)
         {
-            asyn.SetBuffer(asyn.Offset, datas.Length);
-            Array.Copy(datas, 0, asyn.Buffer, 0, datas.Length);
-            asyn.SetBuffer(asyn.Offset, datas.Length);
+            //============生成数据============
+            byte[] msg;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Serializer.Serialize<T>(ms, t);
+                msg = new byte[ms.Length];
+                ms.Position = 0;
+                ms.Read(msg, 0, msg.Length);
+            }
+            byte[] type_value = IntToBytes(type);
+            byte[] Length_value = IntToBytes(msg.Length + type_value.Length);
+            //消息体结构：消息体长度+消息体
+            byte[] data = new byte[Length_value.Length + type_value.Length + msg.Length];
+            Length_value.CopyTo(data, 0);
+            type_value.CopyTo(data, 4);
+            msg.CopyTo(data, 8);
+            //============发送数据============
+            asyn.SetBuffer(asyn.Offset, data.Length);
+            Array.Copy(data, 0, asyn.Buffer, 0, data.Length);
+            asyn.SetBuffer(asyn.Offset, data.Length);
             if (!socket.SendAsync(asyn))//投递发送请求，这个函数有可能同步发送出去，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件
             {
                 // 同步发送时处理发送完成事件
                 this.ProcessSend();
             }
         }
+
         /// <summary>
         /// 发送完成时处理函数
         /// </summary>
@@ -153,7 +173,7 @@ namespace Comm.Network
         #endregion
 
         #region 错误
-        public CallBack<BaseClient> CloseSocket;
+        public CallBack<BaseClient<TModel>> CloseSocket;
         /// <summary>
         /// 处理socket错误
         /// </summary>
@@ -165,7 +185,18 @@ namespace Comm.Network
             Console.WriteLine(String.Format("套接字错误 {0}, IP {1}, 操作 {2}。", (Int32)asyn.SocketError, localEp, asyn.LastOperation));
         }
         #endregion
+
+        public static byte[] IntToBytes(int num)
+        {
+            byte[] bytes = new byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                bytes[i] = (byte)(num >> (24 - i * 8));
+            }
+            return bytes;
+        }
     }
+
     /// <summary>
     /// 客户端状态
     /// </summary>

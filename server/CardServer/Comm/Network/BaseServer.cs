@@ -6,13 +6,12 @@ using System.Threading;
 using System.Net;
 using Comm.Util;
 using Comm.Network.Iocp;
-
 namespace Comm.Network
 {
 	/// <summary>
     /// 服务器基类
     /// </summary>
-	public class BaseServer<TClient> where TClient : BaseClient,new()
+	public class BaseServer<TModel>
     {
         /// <summary>
         /// 监听Socket，用于接受客户端的连接请求
@@ -42,11 +41,11 @@ namespace Comm.Network
         /// <summary>
         /// 完成端口上进行投递所用的IoContext对象池
         /// </summary>
-        private IoContextPool<TClient> ioContextPool;
+        private IoContextPool<TModel> ioContextPool;
 
         //=================================
-        public PacketHandlerManager<TClient> Handlers { get; set; }
-        public List<TClient> Clients=new List<TClient>();
+        public PacketHandlerManager<TModel> Handlers { get; set; }
+        public List<BaseClient<TModel>> Clients=new List<BaseClient<TModel>>();
         //==================================
 
         /// <summary>
@@ -54,33 +53,23 @@ namespace Comm.Network
         /// </summary>
         /// <param name="numConnections">服务器的最大连接数据</param>
         /// <param name="bufferSize"></param>
-        public BaseServer(Int32 numConnections, Int32 bufferSize)
+        public BaseServer(Int32 numConnections, Int32 bufferSize, PacketHandlerManager<TModel> _Handlers)
         {
             this.numConnectedSockets = 0;
             this.numConnections = numConnections;
             this.bufferSize = bufferSize;
-
-            this.ioContextPool = new IoContextPool<TClient>(numConnections);
+            this.Handlers = _Handlers;
+            this.ioContextPool = new IoContextPool<TModel>(numConnections);
 
             // 为IoContextPool预分配SocketAsyncEventArgs对象
             for (Int32 i = 0; i < this.numConnections; i++)
             {
                 SocketAsyncEventArgs ioContext = new SocketAsyncEventArgs();
                 ioContext.SetBuffer(new Byte[this.bufferSize], 0, this.bufferSize);
-                TClient client = new TClient();
-                client.Init(ioContext, bufferSize, Handle, CloseClientSocket);
+                BaseClient<TModel> client = new BaseClient<TModel>();
+                client.Init(ioContext, bufferSize, Handlers.Handle, CloseClientSocket);
                 this.ioContextPool.Add(client);
             }
-        }
-        /// <summary>
-        /// 处理数据
-        /// </summary>
-        /// <param name="client"></param>
-        /// <param name="command"></param>
-        /// <param name="datas"></param>
-        public void Handle(BaseClient client, int command, byte[] datas)
-        {
-            Handlers.Handle(client as TClient, command, datas);
         }
         #region 开始结束
         /// <summary>
@@ -109,7 +98,7 @@ namespace Comm.Network
             {
                 this.listenSocket.Bind(localEndPoint);
             }
-
+            Log.Info("服务器---〉{0}：{1},开始监听.", localEndPoint.Address.ToString(), port.ToString());
             // 开始监听
             this.listenSocket.Listen(this.numConnections);
 
@@ -174,30 +163,29 @@ namespace Comm.Network
             {
                 try
                 {
-                    TClient client = this.ioContextPool.Pop();
+                    BaseClient<TModel> client = this.ioContextPool.Pop();
                     if (client != null)
                     {
                         Interlocked.Increment(ref this.numConnectedSockets);
-                        Console.WriteLine(String.Format("客户 {0} 连入, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), this.numConnectedSockets));
+                        Log.Info("客户 {0} 连入, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), this.numConnectedSockets);
                         client.socket = s;
                         Clients.Add(client);
                         client.BeginRecv();//开始接受数据
                     }
                     else//已经达到最大客户连接数量，在这接受连接，发送“连接已经达到最大数”，然后断开连接
                     {
-                        s.Send(Encoding.Default.GetBytes("连接已经达到最大数!"));
-                        string outStr = String.Format("连接已满，拒绝 {0} 的连接。", s.RemoteEndPoint);
+                        Log.Error("连接已满，拒绝 {0} 的连接。", s.RemoteEndPoint);
                         //mainForm.Invoke(mainForm.setlistboxcallback, outStr);
                         s.Close();
                     }
                 }
                 catch (SocketException ex)
                 {
-                    Console.WriteLine(String.Format("接收客户 {0} 数据出错, 异常信息： {1} 。", s.RemoteEndPoint, ex.ToString()));
+                    Log.Exception(ex,"接收客户 {0} 数据出错, 异常信息： {1} 。", s.RemoteEndPoint);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("异常：" + ex.ToString());
+                    Log.Exception(ex);
                 }
                 // 投递下一个接受请求
                 this.StartAccept(e);
@@ -206,10 +194,11 @@ namespace Comm.Network
         #endregion
 
         #region 关闭客户端连接
-        public void CloseClientSocket(BaseClient client)
+        public void CloseClientSocket(BaseClient<TModel> client)
         {
             Interlocked.Decrement(ref this.numConnectedSockets);
-            this.ioContextPool.Push(client as TClient); // SocketAsyncEventArg 对象被释放，压入可重用队列。
+            Clients.Remove(client);
+            ioContextPool.Push(client); // SocketAsyncEventArg 对象被释放，压入可重用队列。
             Console.WriteLine(String.Format("客户 {0} 断开, 共有 {1} 个连接。", client.socket.RemoteEndPoint.ToString(), this.numConnectedSockets));
             try
             {

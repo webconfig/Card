@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Comm.Util;
-using System.Net.Sockets;
 
 namespace Comm.Network
 {
@@ -9,13 +8,12 @@ namespace Comm.Network
     /// 处理数据
     /// </summary>
     /// <typeparam name="TClient"></typeparam>
-    public abstract class PacketHandlerManager<TClient> where TClient : BaseClient
+    public class PacketHandlerManager<TModel>
     {
-        public delegate void PacketHandlerFunc(TClient client, byte[] datas);
-
+        public delegate void PacketHandlerFunc(BaseClient<TModel> client, byte[] datas);
         private Dictionary<int, PacketHandlerFunc> _handlers;
-
-        protected PacketHandlerManager()
+        
+        public PacketHandlerManager()
         {
             _handlers = new Dictionary<int, PacketHandlerFunc>();
         }
@@ -52,7 +50,7 @@ namespace Comm.Network
         /// <param name="client"></param>
         /// <param name="command"></param>
         /// <param name="datas"></param>
-        public virtual void Handle(TClient client, int command, byte[] datas)
+        public virtual void Handle(BaseClient<TModel> client, int command, byte[] datas)
         {
             PacketHandlerFunc handler;
             if (!_handlers.TryGetValue(command, out handler))
@@ -76,7 +74,7 @@ namespace Comm.Network
             }
         }
 
-        public virtual void UnknownPacket(BaseClient client, int command)
+        public virtual void UnknownPacket(BaseClient<TModel> client, int command)
         {
             Log.Unimplemented("PacketHandlerManager: Handler for '{0:X4}', '{1}'.", command, Op.GetName(command));
         }

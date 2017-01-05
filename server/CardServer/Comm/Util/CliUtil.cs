@@ -8,7 +8,7 @@ namespace Comm.Util
 {
     public class CliUtil
     {
-        private const string TitlePrefix = "Aura : ";
+        private const string TitlePrefix = "GameServer : ";
 
         private static readonly string[] Logo = new string[]
         {
@@ -21,7 +21,7 @@ namespace Comm.Util
 
         private static readonly string[] Credits = new string[]
         {
-            @"by the Aura development team",
+            @"by the mc",
         };
 
         /// <summary>
