@@ -3,7 +3,7 @@ using google.protobuf;
 using Comm.Util;
 namespace ChannelServer.Network.Handlers
 {
-    public partial class ChannelServerHandlers : PacketHandlerManager<ChannelClient>
+    public partial class LoginClientHandlers : PacketHandlerManager<LoginClientModel>
     {
         /// <summary>
         /// 接受登陆服务器返回结果
@@ -11,7 +11,7 @@ namespace ChannelServer.Network.Handlers
         /// <param name="client"></param>
         /// <param name="datas"></param>
         [PacketHandler(Op.Internal.LoginResult)]
-        public void Internal_ServerIdentifyR(BaseClient<ChannelClient> client, byte[] datas)
+        public void Internal_ServerIdentifyR(BaseClient<LoginClientModel> client, byte[] datas)
         {
             RegisterResult result;
             NetHelp.RecvData<RegisterResult>(datas, out result);

@@ -9,6 +9,8 @@ using System.Threading;
 using google.protobuf;
 using ChannelServer.Commands;
 using ChannelServer.Network.Handlers;
+using System.Threading.Tasks;
+using System.Net;
 
 namespace ChannelServer
 {
@@ -26,17 +28,14 @@ namespace ChannelServer
         private bool _running;
 
         public ChannelConsoleCommands ConsoleCommands { get; private set; }
-
-        //public PokerManager Poker;
-
         private ChannelServer()
         {
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
-            this.Server = new BaseServer<ChannelClient>();
-            this.Server.Handlers = new ChannelServerHandlers();
-            this.Server.Handlers.AutoLoad();
-            this.Server.ClientDisconnected += this.OnClientDisconnected;
+            ChannelServerHandlers Handlers = new ChannelServerHandlers();
+            Handlers.AutoLoad();
+            this.Server = new BaseServer<ChannelClient>(2000, 1024 * 2, Handlers);
+
 
             //this.ServerList = new ServerInfoManager();
 
@@ -53,15 +52,19 @@ namespace ChannelServer
             //this.Timer = new Timer(new TimerCallback(ShutdownTimerDone));
         }
 
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            
+        }
+
         public void Run()
         {
             if (_running)
                 throw new Exception("Server is already running.");
-
-            CliUtil.WriteHeader("Channel Server", ConsoleColor.DarkGreen);
+            //标题栏
+            CliUtil.WriteHeader("Channel Server" + DateTime.Now.ToString(), ConsoleColor.DarkGreen);
             CliUtil.LoadingTitle();
-
-            // Conf
+            //配置文件
             this.LoadConf(this.Conf = new ChannelConf());
 
             //// Database
@@ -89,17 +92,17 @@ namespace ChannelServer
             //if (this.Conf.Autoban.Enabled)
             //    this.Events.SecurityViolation += (e) => Autoban.Incident(e.Client, e.Level, e.Report, e.StackReport);
 
-            // Start
+            //服务器开启
             this.Server.Start(this.Conf.Channel.ChannelPort);
 
-            // Inter
+            //连接登陆服务器
             this.ConnectToLogin(true);
             //this.StartStatusUpdateTimer();
 
             CliUtil.RunningTitle();
             _running = true;
 
-            // Commands
+            //GM操作
             this.ConsoleCommands.Wait();
         }
 
@@ -107,18 +110,19 @@ namespace ChannelServer
         /// <summary>
         /// 连接登陆服务器
         /// </summary>
-        public ChannelClient LoginServer { get; private set; }
+        public BaseClient<LoginClientModel> LoginClient { get; private set; }
         /// <summary>
         /// 重连登陆服务器间歇时间
         /// </summary>
         private const int LoginTryTime = 10 * 1000;
+        private const int LoginClientBuffSize = 1024 * 2;
         /// <summary>
         /// 连接登陆服务器
         /// </summary>
         /// <param name="firstTime"></param>
         public void ConnectToLogin(bool firstTime)
         {
-            if (this.LoginServer != null && this.LoginServer.State == ClientState.LoggedIn)
+            if (this.LoginClient != null && this.LoginClient.State == ClientState.LoggedIn)
                 throw new Exception("已经连接到登陆服务器.");
 
             Log.WriteLine();
@@ -131,76 +135,58 @@ namespace ChannelServer
                 Thread.Sleep(LoginTryTime);
             }
 
-            var success = false;
-            while (!success)
+            try
             {
-                try
+                if (this.LoginClient == null)
                 {
-                    if (this.LoginServer != null && this.LoginServer.State != ClientState.Dead)
-                        this.LoginServer.Kill();
-
-                    this.LoginServer = new ChannelClient();
-                    this.LoginServer.Socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    this.LoginServer.Socket.Connect(ChannelServer.Instance.Conf.Channel.LoginHost, ChannelServer.Instance.Conf.Channel.LoginPort);
-                    this.Server.AddReceivingClient(this.LoginServer);
-                    this.LoginServer.State = ClientState.LoggingIn;
-                    success = true;
-                    //发送注册包
-                    Register res_model = new Register();
-                    res_model.Password = "12345";
-                    NetHelp.Send<Register>(Op.Internal.ChannelToLogin, res_model, this.LoginServer.Socket);
+                    SocketAsyncEventArgs socketAsyncEventArgs = new SocketAsyncEventArgs();
+                    socketAsyncEventArgs.SetBuffer(new Byte[LoginClientBuffSize], 0, LoginClientBuffSize);
+                    LoginClientHandlers lch = new LoginClientHandlers();
+                    lch.AutoLoad();
+                    this.LoginClient = new BaseClient<LoginClientModel>();
+                    this.LoginClient.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    this.LoginClient.Init(socketAsyncEventArgs, LoginClientBuffSize, lch.Handle, LoginClientClose);
                 }
-                catch (Exception ex)
-                {
-                    Log.Error("开启服务器错误. ({0})", ex.Message);
-                    Log.Info("{0} 秒后重新连接登陆服务器.", LoginTryTime / 1000);
-                    Thread.Sleep(LoginTryTime);
-                }
+                this.LoginClient.Connect(new System.Net.IPEndPoint(IPAddress.Parse(ChannelServer.Instance.Conf.Channel.LoginHost), ChannelServer.Instance.Conf.Channel.LoginPort), ConnOk);
             }
-
-            Log.Info("成功连接登陆服务器:'{0}'", this.LoginServer.Address);
+            catch (Exception ex)
+            {
+                Log.Error("开启服务器错误. ({0})", ex.Message);
+                Log.Info("{0} 秒后重新连接登陆服务器.", LoginTryTime / 1000);
+                Thread.Sleep(LoginTryTime);
+            }
+        }
+        public void ConnOk()
+        {
+            this.LoginClient.State = ClientState.LoggingIn;
+            //发送注册包
+            Register res_model = new Register();
+            res_model.Password = "12345";
+            LoginClient.Send<Register>(Op.Internal.ChannelToLogin, res_model);
+            Log.Info("成功连接登陆服务器:'{0}'", ChannelServer.Instance.Conf.Channel.LoginHost);
             Log.WriteLine();
         }
+
+        public void HandleLoginMsg(BaseClient<LoginClientModel> client, int command, byte[] bytes)
+        {
+
+        }
+        public void LoginClientClose(BaseClient<LoginClientModel> client)
+        {
+            try
+            {
+                client.socket.Shutdown(SocketShutdown.Send);
+            }
+            catch (Exception)
+            {
+                // Throw if client has closed, so it is not necessary to catch.
+            }
+            finally
+            {
+                client.socket.Close();
+            }
+        }
         #endregion
-
-        /// <summary>
-        /// 处理异常
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            try
-            {
-                Log.Error("Oh no! Ferghus escaped his memory block and infected the rest of the server!");
-                Log.Error("Aura has encountered an unexpected and unrecoverable error. We're going to try to save as much as we can.");
-            }
-            catch { }
-            try
-            {
-                this.Server.Stop();
-            }
-            catch { }
-            try
-            {
-                // save the world
-            }
-            catch { }
-            try
-            {
-                Log.Exception((Exception)e.ExceptionObject);
-                Log.Status("Closing server.");
-            }
-            catch { }
-
-            CliUtil.Exit(1, false);
-        }
-
-        
-        private void OnClientDisconnected(ChannelClient client)
-        {
-            if (client == this.LoginServer)
-                this.ConnectToLogin(false);
-        }
     }
+
 }

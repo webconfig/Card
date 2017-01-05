@@ -50,7 +50,9 @@
     <Compile Include="ChannelServer.cs" />
     <Compile Include="Commands\ChannelConsoleCommands.cs" />
     <Compile Include="Configuration\ChannelConf.cs" />
+    <Compile Include="Network\LoginClientModel.cs" />
     <Compile Include="Network\ChannelClient.cs" />
+    <Compile Include="Network\Handlers\LoginClientHandlers.cs" />
     <Compile Include="Network\Handlers\Internal.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

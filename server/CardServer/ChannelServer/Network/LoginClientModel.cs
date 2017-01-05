@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace ChannelServer.Network
 {
-    public class ChannelClient
+    public class LoginClientModel
     { 
     }
 }
