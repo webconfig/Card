@@ -6,6 +6,35 @@ using System.Collections.Generic;
 
 public class NetHelp
 {
+    public static void Send<T>(int entity_id, int type, T t, Socket socket)
+    {
+        byte[] msg;
+        using (MemoryStream ms = new MemoryStream())
+        {
+            Serializer.Serialize<T>(ms, t);
+            msg = new byte[ms.Length];
+            ms.Position = 0;
+            ms.Read(msg, 0, msg.Length);
+        }
+        byte[] entity_id_value = IntToBytes(entity_id);
+        byte[] type_value = IntToBytes(type);
+        byte[] Length_value = IntToBytes(msg.Length + type_value.Length + entity_id_value.Length);
+        //消息体结构：消息体长度+消息体
+        byte[] data = new byte[Length_value.Length + type_value.Length + msg.Length + entity_id_value.Length];
+        Length_value.CopyTo(data, 0);
+        entity_id_value.CopyTo(data, 4);
+        type_value.CopyTo(data, 8);
+        msg.CopyTo(data, 12);
+
+        try
+        {
+            socket.Send(data);
+        }
+        catch (Exception ex)
+        {
+            //Log.Error("发送数据错误:" + ex.ToString());
+        }
+    }
     public static void Send<T>(int type, T t, Socket socket)
     {
         byte[] msg;
@@ -30,25 +59,7 @@ public class NetHelp
         }
         catch (Exception ex)
         {
-            //Log.Error("发送数据错误:" + ex.ToString());
-        }
-    }
-    public static bool Send(int type, Socket socket)
-    {
-        byte[] type_value = IntToBytes(type);
-        byte[] Length_value = IntToBytes(type_value.Length);
-        byte[] data = new byte[Length_value.Length + type_value.Length];
-        Length_value.CopyTo(data, 0);
-        type_value.CopyTo(data, 4);
-        try
-        {
-            socket.Send(data);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            //Log.Error("发送数据错误:" + ex.ToString());
-            return false;
+            UnityEngine.Debug.Log("发送数据错误:" + ex.ToString());
         }
     }
     public static void RecvData<T>(byte[] data, out T t)

@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using UnityEngine;
 using google.protobuf;
+
 public class test : MonoBehaviour
 {
     private void OnGUI()
@@ -11,9 +12,10 @@ public class test : MonoBehaviour
         if (GUI.Button(new Rect(100, 150, 100, 50), "连接"))
         {
             Connection.Client.ConnectOkEvent += Client_ConnectOkEvent;
-            Connection.Client.ConnectAsync("127.0.0.1", 11000);
+            Connection.Client.ConnectAsync("192.168.2.100", 11000);
         }
     }
+
 
     void Client_ConnectOkEvent()
     {

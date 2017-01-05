@@ -8,17 +8,21 @@ using System.Net;
 public  class Client
 {
     private const int BufferSize = 1024 * 5;
-    private Queue<Packet> queue;
+    private Dictionary<int, Queue<Packet>> datas;
+    public object datas_obj;
     public Socket socket;
     private byte[] buffer;
     private List<byte> AllDatas;
     public ConnectionState State { get; private set; }
     public event CallBack ConnectOkEvent;
+    public PacketHandlerManager Handlers { get; set; }
     public Client()
     {
-        this.queue = new Queue<Packet>();
+        this.datas = new Dictionary<int, Queue<Packet>>();
         this.buffer = new byte[BufferSize];
         AllDatas = new List<byte>();
+        Handlers = new LoginServerHandlers();
+        Handlers.AutoLoad();
     }
 
     #region 连接
@@ -97,27 +101,6 @@ public  class Client
         else
             this.State = ConnectionState.Connected;
     }
-
-    //private void HandShake()
-    //{
-    //    // Get seed
-    //    var length = this.socket.Receive(this.buffer);
-    //    if (length != 4)
-    //        throw new Exception("Invalid seed length.");
-
-    //    //var seed = BitConverter.ToInt32(this.buffer, 0);
-
-    //    // Last 4 byte is the checksum
-    //    this.socket.Send(new byte[] { 0x88, 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04 });
-
-    //    // Get handshake response
-    //    length = this.socket.Receive(this.buffer);
-    //    if (length != 7 || this.buffer[0] != 0x88 || this.buffer[6] != 0x07) // 88 07 00 00 00 00 07
-    //        throw new Exception("Invalid handshake response");
-
-    //    this.BeginReceive();
-    //}
-
     public void Disconnect()
     {
         if (this.socket == null)
@@ -181,7 +164,7 @@ public  class Client
                         byte[] msgBytes = new byte[len - 8];
                         AllDatas.CopyTo(8, msgBytes, 0, msgBytes.Length);
                         AllDatas.RemoveRange(0, len);
-                        HandleBuffer(this, command, msgBytes);
+                        Handlers.Handle(this, command, msgBytes);
                     }
                     else { break; }
                 }
@@ -189,10 +172,6 @@ public  class Client
             } while (true);
 
             this.BeginReceive();
-        }
-        catch (ObjectDisposedException)
-        {
-            
         }
         catch (SocketException ex)
         {
@@ -203,32 +182,21 @@ public  class Client
             Debug.LogException(ex);
         }
     }
-
-    /// <summary>
-    /// 处理包数据
-    /// </summary>
-    /// <param name="client"></param>
-    /// <param name="buffer"></param>
-    private void HandleBuffer(Client client, int command, byte[] buffer)
-    {
-        var packet = new Packet(command, buffer);
-
-        lock (this.queue)
-            this.queue.Enqueue(packet);
-    }
     #endregion
 
-    public List<Packet> GetPacketsFromQueue()
+    public List<Packet> GetPacketsFromQueue(int entity_id)
     {
-        var result = new List<Packet>();
-
-        lock (this.queue)
+        lock (this.datas_obj)
         {
-            result.AddRange(this.queue);
-            this.queue.Clear();
+            if (datas.ContainsKey(entity_id))
+            {
+                var result = new List<Packet>();
+                result.AddRange(datas[entity_id]);
+                datas[entity_id].Clear();
+                return result;
+            }
+            return null;
         }
-
-        return result;
     }
 
     public string GetLocalIp()
