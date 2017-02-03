@@ -36,6 +36,15 @@ namespace Comm.Network
         {
             switch (e.LastOperation)
             {
+                case SocketAsyncOperation.Connect:
+                    if(ConnectOk!=null)
+                    {
+                        ConnectOk();
+                        ConnectOk = null;
+                    }
+                    asyn.RemoteEndPoint = null;
+                    this.BeginRecv();
+                    break;
                 case SocketAsyncOperation.Receive:
                     this.ProcessReceive();
                     break;
@@ -46,6 +55,21 @@ namespace Comm.Network
                     throw new ArgumentException("The last operation completed on the socket was not a receive or send");
             }
         }
+
+        #region 连接
+        public CallBack ConnectOk;
+        public void Connect(IPEndPoint ipEndPoint, CallBack _ConnectOk)
+        {
+            ConnectOk = _ConnectOk;
+            asyn.RemoteEndPoint = ipEndPoint;
+            if (!socket.ConnectAsync(asyn))
+            {
+                asyn.RemoteEndPoint = null;
+                this.BeginRecv();
+            }
+        }
+        #endregion
+
 
         #region 接受数据
         public CallBack<BaseClient<TModel>, int, byte[]> Handle;

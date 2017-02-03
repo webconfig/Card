@@ -12,9 +12,9 @@ namespace Comm.ConsoleCommands
         {
             _commands = new Dictionary<string, ConsoleCommand>();
 
-            this.Add("帮助", "显示帮助", HandleHelp);
-            this.Add("退出", "关闭 程序/服务器", HandleExit);
-            this.Add("状态", "显示程序状态", HandleStatus);
+            this.Add("help", "显示帮助", HandleHelp);
+            this.Add("exit", "关闭 程序/服务器", HandleExit);
+            this.Add("state", "显示程序状态", HandleStatus);
         }
 
         #region 添加命令
