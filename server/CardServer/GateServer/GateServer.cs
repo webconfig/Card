@@ -2,6 +2,8 @@
 using Comm;
 using Comm.Network;
 using Comm.Util;
+using Orleans.Runtime.Configuration;
+using Orleans;
 
 namespace GateServer
 {
@@ -9,13 +11,13 @@ namespace GateServer
     {
         public static readonly GateServer Instance = new GateServer();
         private bool _running = false;
-        public BaseServer<ConnClient> Server { get; set; }
+        public BaseServer<ClientData> Server { get; set; }
         public GateConf Conf { get; private set; }
         private GateServer()
         {
-            //LoginServerHandlers Handlers = new LoginServerHandlers();
-            //Handlers.AutoLoad();
-            //this.Server = new BaseServer<ConnClient>(2000, 1024 * 2, Handlers);
+            ClientHandler Handlers = new ClientHandler();
+            Handlers.AutoLoad();
+            this.Server = new BaseServer<ClientData>(2000, 1024 * 2, Handlers);
         }
         public void Run()
         {
@@ -45,15 +47,25 @@ namespace GateServer
             //// Scripts
             //this.LoadScripts();
 
+            //
+            InitGameServer();
+
             //开启服务器
             this.Server.Start(this.Conf.Gate.Port);
 
             CliUtil.RunningTitle();
             _running = true;
 
-            ////GM操作
-            //var commands = new LoginConsoleCommands();
-            //commands.Wait();
+            //GM操作
+            var commands = new GMCommands();
+            commands.Wait();
+        }
+
+
+        private void InitGameServer()
+        {
+            var config = ClientConfiguration.LocalhostSilo();
+            GrainClient.Initialize(config);
         }
     }
 }
