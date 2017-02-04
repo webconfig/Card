@@ -51,4 +51,96 @@ namespace google.protobuf
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"CreateGameRequest")]
+  public partial class CreateGameRequest : global::ProtoBuf.IExtensible
+  {
+    public CreateGameRequest() {}
+    
+    private string _UserName;
+    [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"UserName", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string UserName
+    {
+      get { return _UserName; }
+      set { _UserName = value; }
+    }
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"CreateGameResult")]
+  public partial class CreateGameResult : global::ProtoBuf.IExtensible
+  {
+    public CreateGameResult() {}
+    
+    private string _RoomId;
+    [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"RoomId", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string RoomId
+    {
+      get { return _RoomId; }
+      set { _RoomId = value; }
+    }
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"QueryRoomRequest")]
+  public partial class QueryRoomRequest : global::ProtoBuf.IExtensible
+  {
+    public QueryRoomRequest() {}
+    
+    private string _RoomId;
+    [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"RoomId", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string RoomId
+    {
+      get { return _RoomId; }
+      set { _RoomId = value; }
+    }
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"QueryRoomResult")]
+  public partial class QueryRoomResult : global::ProtoBuf.IExtensible
+  {
+    public QueryRoomResult() {}
+    
+    private readonly global::System.Collections.Generic.List<google.protobuf.QueryRoomResult.QueryRoomResultItem> _result = new global::System.Collections.Generic.List<google.protobuf.QueryRoomResult.QueryRoomResultItem>();
+    [global::ProtoBuf.ProtoMember(1, Name=@"result", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public global::System.Collections.Generic.List<google.protobuf.QueryRoomResult.QueryRoomResultItem> result
+    {
+      get { return _result; }
+    }
+  
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"QueryRoomResultItem")]
+  public partial class QueryRoomResultItem : global::ProtoBuf.IExtensible
+  {
+    public QueryRoomResultItem() {}
+    
+    private string _RoomId;
+    [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"RoomId", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string RoomId
+    {
+      get { return _RoomId; }
+      set { _RoomId = value; }
+    }
+    private string _RoomName;
+    [global::ProtoBuf.ProtoMember(2, IsRequired = true, Name=@"RoomName", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string RoomName
+    {
+      get { return _RoomName; }
+      set { _RoomName = value; }
+    }
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
 }
