@@ -38,29 +38,35 @@ namespace CardGrains
             return (await grain.GetGames()).Where(x => !this.ListOfActiveGames.Contains(x.GameId)).ToArray();
         }
 
-        // create a new game, and add oursleves to that game
+        /// <summary>
+        /// 创建一个房间
+        /// </summary>
+        /// <returns></returns>
         public async Task<Guid> CreateGame()
         {
             this.gamesStarted += 1;
 
             var gameId = Guid.NewGuid();
-            var gameGrain = GrainFactory.GetGrain<IGameGrain>(gameId);  // create new game
+            var gameGrain = GrainFactory.GetGrain<IGameGrain>(gameId);  // 创建一个房间
 
-            // add ourselves to the game
             var playerId = this.GetPrimaryKey();  // our player id
-            await gameGrain.AddPlayerToGame(playerId);
+            await gameGrain.AddPlayerToGame(playerId);//把自己添加进去
             this.ListOfActiveGames.Add(gameId);
             var name = this.username + "'s " + AddOrdinalSuffix(this.gamesStarted.ToString()) + " game";
-            await gameGrain.SetName(name);
+            await gameGrain.SetName(name);//设置房间名称
 
             var pairingGrain = GrainFactory.GetGrain<IPairingGrain>(0);
-            await pairingGrain.AddGame(gameId, name);
+            await pairingGrain.AddGame(gameId, name);//添加到匹配里面去
 
             return gameId;
         }
 
 
-        // join a game that is awaiting players
+        /// <summary>
+        /// 加入一个房间
+        /// </summary>
+        /// <param name="gameId"></param>
+        /// <returns></returns>
         public async Task<GameState> JoinGame(Guid gameId)
         {
             var gameGrain = GrainFactory.GetGrain<IGameGrain>(gameId);
@@ -115,7 +121,6 @@ namespace CardGrains
         {
             return Task.FromResult(this.username);
         }
-
 
         private static string AddOrdinalSuffix(string number)
         {
