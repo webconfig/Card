@@ -29,8 +29,23 @@ public partial class LoginServerHandlers : PacketHandlerManager
         NetHelp.RecvData<QueryRoomResult>(datas, out model_query_result);
         for (int i = 0; i < model_query_result.result.Count; i++)
         {
-            UnityEngine.Debug.Log(string.Format("房间ID:{0},房间名:{1}", model_query_result.result[i].RoomId, model_query_result.result[i].RoomName));
+            UnityEngine.Debug.Log(string.Format("房间名:{0}",  model_query_result.result[i].RoomName));
+        }
+        if(QueryEvent!= null)
+        {
+            QueryEvent(model_query_result.result);
         }
         
     }
+
+    [PacketHandler(Op.Client.JoinRoom)]
+    public void JoinRoom(Client client, byte[] datas)
+    {
+        ClientResult model_join_result;
+        NetHelp.RecvData<ClientResult>(datas, out model_join_result);
+        UnityEngine.Debug.Log("加入房间返回结果：" + model_join_result.Result);
+    }
+
+
+    public event CallBack<List<QueryRoomResult.QueryRoomResultItem>> QueryEvent;
 }

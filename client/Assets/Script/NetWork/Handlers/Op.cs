@@ -8,6 +8,8 @@ public static class Op
         public const int Login = 0x10000001;
         public const int CreateRoom = 0x20000001;
         public const int QueryRoom = 0x20000002;
+        public const int JoinRoom = 0x20000003;
+        public const int LeaveRoom = 0x20000004;
     }
 
 

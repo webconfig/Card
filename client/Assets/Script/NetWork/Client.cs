@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Collections.Generic;
 using System;
 using System.Net;
+using google.protobuf;
 
 public  class Client
 {
@@ -15,7 +16,7 @@ public  class Client
     private List<byte> AllDatas;
     public ConnectionState State { get; private set; }
     public event CallBack ConnectOkEvent;
-    public PacketHandlerManager Handlers { get; set; }
+    public LoginServerHandlers Handlers { get; set; }
     public Client()
     {
         this.datas = new Dictionary<int, Queue<Packet>>();

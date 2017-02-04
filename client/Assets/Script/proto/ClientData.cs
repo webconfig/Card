@@ -119,9 +119,9 @@ namespace google.protobuf
   {
     public QueryRoomResultItem() {}
     
-    private string _RoomId;
+    private byte[] _RoomId;
     [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"RoomId", DataFormat = global::ProtoBuf.DataFormat.Default)]
-    public string RoomId
+    public byte[] RoomId
     {
       get { return _RoomId; }
       set { _RoomId = value; }
@@ -138,6 +138,23 @@ namespace google.protobuf
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
   }
   
+    private global::ProtoBuf.IExtension extensionObject;
+    global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+      { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
+  }
+  
+  [global::System.Serializable, global::ProtoBuf.ProtoContract(Name=@"JoinRoomRequest")]
+  public partial class JoinRoomRequest : global::ProtoBuf.IExtensible
+  {
+    public JoinRoomRequest() {}
+    
+    private byte[] _RoomId;
+    [global::ProtoBuf.ProtoMember(1, IsRequired = true, Name=@"RoomId", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public byte[] RoomId
+    {
+      get { return _RoomId; }
+      set { _RoomId = value; }
+    }
     private global::ProtoBuf.IExtension extensionObject;
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }
