@@ -71,11 +71,34 @@ namespace GateServer
             for (int i = 0; i < kkk.Length; i++)
             {
                 QueryRoomResult.QueryRoomResultItem item = new QueryRoomResult.QueryRoomResultItem();
-                item.RoomId = kkk[i].GameId.ToString();
+                item.RoomId = kkk[i].GameId.ToByteArray();
                 item.RoomName = kkk[i].Name;
                 result.result.Add(item);
             }
             client.Send<QueryRoomResult>(Op.Client.QueryRoom, result);
+        }
+
+
+        /// <summary>
+        /// 加入房间
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="datas"></param>
+        [PacketHandler(Op.Client.JoinRoom)]
+        public async void JoinRoom(BaseClient<ClientData> client, byte[] datas)
+        {
+            JoinRoomRequest model_join_room;
+            NetHelp.RecvData<JoinRoomRequest>(datas, out model_join_room);
+            Guid RoooId = new Guid(model_join_room.RoomId);
+
+            Log.Debug("房间id：{0}", RoooId.ToString());
+
+            var player = GrainClient.GrainFactory.GetGrain<IPlayerGrain>(client.t.playerId);
+            GameState state = await player.JoinGame(RoooId);
+
+            ClientResult result = new ClientResult();
+            result.Result = true;
+            client.Send<ClientResult>(Op.Client.JoinRoom, result);
         }
     }
 }
