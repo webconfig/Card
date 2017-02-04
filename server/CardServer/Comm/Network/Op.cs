@@ -6,16 +6,11 @@ namespace Comm.Network
     /// </summary>
     public static class Op
     {
-
-        public static class Internal
-        {
-            public const int ChannelToLogin = 0x00000001;
-            public const int LoginResult = 0x00000002;
-            public const int ChannelStatus= 0x00000003;
-        }
         public static class Client
         {
             public const int Login = 0x10000001;
+            public const int CreateRoom = 0x20000001;
+            public const int QueryRoom = 0x20000002;
         }
 
         /// <summary>
