@@ -10,26 +10,26 @@ namespace CardSetup
     {
         static int Main(string[] args)
         {
-            var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string mapFileName = Path.Combine(path, "AdventureMap.json");
+            //var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            //string mapFileName = Path.Combine(path, "AdventureMap.json");
 
-            switch (args.Length)
-            {
-                default:
-                    Console.WriteLine("*** Invalid command line arguments.");
-                    return -1;
-                case 0:
-                    break;
-                case 1:
-                    mapFileName = args[0];
-                    break;
-            }
+            //switch (args.Length)
+            //{
+            //    default:
+            //        Console.WriteLine("*** Invalid command line arguments.");
+            //        return -1;
+            //    case 0:
+            //        break;
+            //    case 1:
+            //        mapFileName = args[0];
+            //        break;
+            //}
 
-            if (!File.Exists(mapFileName))
-            {
-                Console.WriteLine("*** File not found: {0}", mapFileName);
-                return -2;
-            }
+            //if (!File.Exists(mapFileName))
+            //{
+            //    Console.WriteLine("*** File not found: {0}", mapFileName);
+            //    return -2;
+            //}
 
             // The Orleans silo environment is initialized in its own app domain in order to more
             // closely emulate the distributed situation, when the client and the server cannot
@@ -43,11 +43,11 @@ namespace CardSetup
             var config = ClientConfiguration.LocalhostSilo();
             GrainClient.Initialize(config);
 
-            Console.WriteLine("Map file name is '{0}'.", mapFileName);
-            Console.WriteLine("Setting up Adventure, please wait ...");
-            Adventure adventure = new Adventure();
-            adventure.Configure(mapFileName).Wait();
-            Console.WriteLine("Adventure setup completed.");
+            //Console.WriteLine("Map file name is '{0}'.", mapFileName);
+            //Console.WriteLine("Setting up Adventure, please wait ...");
+            //Adventure adventure = new Adventure();
+            //adventure.Configure(mapFileName).Wait();
+            //Console.WriteLine("Adventure setup completed.");
             Console.ReadLine();
 
             hostDomain.DoCallBack(ShutdownSilo);
