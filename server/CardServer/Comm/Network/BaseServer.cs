@@ -76,12 +76,12 @@ namespace Comm.Network
         /// 启动服务，开始监听
         /// </summary>
         /// <param name="port">Port where the server will listen for connection requests.</param>
-        public void Start(Int32 port)
+        public void Start(string ip, Int32 port)
         {
-            // 获得主机相关信息
-            IPAddress[] addressList = Dns.GetHostEntry(Environment.MachineName).AddressList;
-            IPEndPoint localEndPoint = new IPEndPoint(addressList[addressList.Length - 1], port);
-
+            //// 获得主机相关信息
+            //IPAddress[] addressList = Dns.GetHostEntry(Environment.MachineName).AddressList;
+            //IPEndPoint localEndPoint = new IPEndPoint(addressList[addressList.Length - 1], port);
+            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
             // 创建监听socket
             this.listenSocket = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             this.listenSocket.ReceiveBufferSize = this.bufferSize;
