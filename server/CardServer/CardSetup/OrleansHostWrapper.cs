@@ -132,8 +132,8 @@ namespace CardSetup
                 }
             }
 
-            var config = ClusterConfiguration.LocalhostPrimarySilo();
-            siloHost = new SiloHost(siloName, config);
+            //var config = ClusterConfiguration.LocalhostPrimarySilo(22222,6667);
+            siloHost = new SiloHost(siloName, new System.IO.FileInfo("ServerConfiguration.xml"));
 
             if (deploymentId != null)
                 siloHost.DeploymentId = deploymentId;

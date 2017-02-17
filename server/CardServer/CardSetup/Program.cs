@@ -40,8 +40,8 @@ namespace CardSetup
                 AppDomainInitializerArguments = args,
             });
 
-            var config = ClientConfiguration.LocalhostSilo();
-            GrainClient.Initialize(config);
+            //var config = ClientConfiguration.LocalhostSilo();
+            //GrainClient.Initialize(config);
 
             //Console.WriteLine("Map file name is '{0}'.", mapFileName);
             //Console.WriteLine("Setting up Adventure, please wait ...");
