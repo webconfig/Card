@@ -51,7 +51,7 @@ namespace GateServer
             InitGameServer();
 
             //开启服务器
-            this.Server.Start(this.Conf.Gate.Port);
+            this.Server.Start("127.0.0.1",this.Conf.Gate.Port);
 
             CliUtil.RunningTitle();
             _running = true;
@@ -64,8 +64,10 @@ namespace GateServer
 
         private void InitGameServer()
         {
-            var config = ClientConfiguration.LocalhostSilo();
-            GrainClient.Initialize(config);
+            //var config = ClientConfiguration.LocalhostSilo();
+            GrainClient.Initialize(new System.IO.FileInfo("ClientConfiguration.xml"));
+            //var config = Orleans.Runtime.Configuration.ClientConfiguration.LocalhostSilo(6667);
+            //GrainClient.Initialize(config);
         }
     }
 }
